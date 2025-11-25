@@ -25,32 +25,16 @@ def show():
     
     # Dataset overview
     st.markdown("## 📊 Dataset Overview")
-    
-    dataset_path = project_root / "dataset/phase_2_2"
-    
-    if not dataset_path.exists():
-        st.error(f"Dataset not found at {dataset_path}")
-        return
-    
-    # Load dataset statistics
-    csv_files = list(dataset_path.glob("*.csv"))
-    
-    if not csv_files:
-        st.warning("No CSV files found in dataset directory")
-        return
-    
-    # Count samples per class
-    class_info = {}
-    
-    for csv_file in csv_files:
-        class_name = csv_file.stem
-        try:
-            from src.data_loader import load_mms_csv
-            signals = load_mms_csv(csv_file)
-            class_info[class_name] = len(signals)
-        except Exception as e:
-            st.error(f"Error loading {csv_file.name}: {e}")
-    
+
+    # Use static dataset statistics (from training)
+    # Since dataset files are excluded from deployment to reduce size
+    class_info = {
+        'normal': 5404,
+        'unbalance_fault': 5375,
+        'misalignment_fault': 5404,
+        'bearing_fault': 5404
+    }
+
     # Display statistics
     total_samples = sum(class_info.values())
     
@@ -97,82 +81,70 @@ def show():
     
     # Sample visualization
     st.markdown("## 🔍 Sample Visualization")
-    
-    st.info("Select a fault class and sample number to visualize the vibration signal")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        selected_class = st.selectbox(
-            "Select Fault Class",
-            options=list(class_info.keys()),
-            format_func=lambda x: x.replace('_', ' ').title()
-        )
-    
-    with col2:
-        max_samples = class_info.get(selected_class, 0)
-        sample_idx = st.number_input(
-            "Sample Index",
-            min_value=0,
-            max_value=max(0, max_samples - 1),
-            value=0
-        )
-    
-    if st.button("📊 Load and Visualize", type="primary"):
+
+    st.info("View a sample vibration signal from the dataset (Demo: Normal operation)")
+
+    if st.button("📊 Load Demo Sample", type="primary"):
         with st.spinner("Loading signal..."):
             try:
                 from src.data_loader import load_mms_csv
-                
-                csv_file = dataset_path / f"{selected_class}.csv"
-                signals = load_mms_csv(csv_file)
-                
-                if sample_idx < len(signals):
-                    signal = signals[sample_idx]
-                    
-                    # Display signal info
-                    st.markdown(f"### Signal Information")
-                    
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Class", selected_class.replace('_', ' ').title())
-                    with col2:
-                        st.metric("Sample Index", sample_idx)
-                    with col3:
-                        st.metric("Shape", f"{signal.shape[0]} × {signal.shape[1]}")
-                    
-                    # Plot signal
-                    fig = plot_vibration_signal(
-                        signal,
-                        title=f"{selected_class.replace('_', ' ').title()} - Sample {sample_idx}"
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Signal statistics
-                    with st.expander("📊 Signal Statistics"):
-                        stats_df = pd.DataFrame({
-                            'Axis': ['X', 'Y', 'Z'],
-                            'Mean': [f"{signal[:, i].mean():.6f}" for i in range(3)],
-                            'Std Dev': [f"{signal[:, i].std():.6f}" for i in range(3)],
-                            'Min': [f"{signal[:, i].min():.6f}" for i in range(3)],
-                            'Max': [f"{signal[:, i].max():.6f}" for i in range(3)],
-                            'Range': [f"{signal[:, i].max() - signal[:, i].min():.6f}" for i in range(3)]
-                        })
-                        st.dataframe(stats_df, use_container_width=True, hide_index=True)
-                    
-                    # Raw data preview
-                    with st.expander("📋 Raw Data Preview"):
-                        preview_df = pd.DataFrame(
-                            signal[:100],  # Show first 100 timesteps
-                            columns=['X-Axis', 'Y-Axis', 'Z-Axis']
+
+                # Load demo sample from sample_data
+                demo_file = project_root / "sample_data/sample_vibration_data.csv"
+
+                if demo_file.exists():
+                    signals = load_mms_csv(demo_file)
+
+                    if len(signals) > 0:
+                        signal = signals[0]  # Get first sample
+
+                        # Display signal info
+                        st.markdown(f"### Signal Information")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Class", "Normal")
+                        with col2:
+                            st.metric("Sample Type", "Demo")
+                        with col3:
+                            st.metric("Shape", f"{signal.shape[0]} × {signal.shape[1]}")
+
+                        # Plot signal
+                        fig = plot_vibration_signal(
+                            signal,
+                            title="Normal Operation - Demo Sample"
                         )
-                        preview_df.index.name = 'Timestep'
-                        st.dataframe(preview_df, use_container_width=True)
-                
+                        st.plotly_chart(fig, use_container_width=True)
+
+                        # Signal statistics
+                        with st.expander("📊 Signal Statistics"):
+                            stats_df = pd.DataFrame({
+                                'Axis': ['X', 'Y', 'Z'],
+                                'Mean': [f"{signal[:, i].mean():.6f}" for i in range(3)],
+                                'Std Dev': [f"{signal[:, i].std():.6f}" for i in range(3)],
+                                'Min': [f"{signal[:, i].min():.6f}" for i in range(3)],
+                                'Max': [f"{signal[:, i].max():.6f}" for i in range(3)],
+                                'Range': [f"{signal[:, i].max() - signal[:, i].min():.6f}" for i in range(3)]
+                            })
+                            st.dataframe(stats_df, use_container_width=True, hide_index=True)
+
+                        # Raw data preview
+                        with st.expander("📋 Raw Data Preview"):
+                            preview_df = pd.DataFrame(
+                                signal[:100],  # Show first 100 timesteps
+                                columns=['X-Axis', 'Y-Axis', 'Z-Axis']
+                            )
+                            preview_df.index.name = 'Timestep'
+                            st.dataframe(preview_df, use_container_width=True)
+                    else:
+                        st.error("No signals found in demo file")
                 else:
-                    st.error(f"Sample index {sample_idx} out of range (max: {len(signals)-1})")
-                
+                    st.error(f"Demo file not found at: {demo_file}")
+
             except Exception as e:
                 st.error(f"Error loading signal: {e}")
+                import traceback
+                st.code(traceback.format_exc())
     
     st.markdown("---")
     
