@@ -7,6 +7,7 @@ scipy>=1.11.0
 
 # Time Series Analysis
 sktime>=0.24.0
+numba>=0.57.0
 
 # Visualization
 matplotlib>=3.7.0
