@@ -1,0 +1,25 @@
+# MMS Fault Classification - Requirements
+# Core ML/Data Science
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# Time Series Analysis
+sktime>=0.24.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+
+# Dashboard
+streamlit>=1.28.0
+streamlit-option-menu>=0.3.6
+
+# Utilities
+joblib>=1.3.0
+tqdm>=4.66.0
+
+# Optional: For enhanced visualizations
+kaleido>=0.2.1
