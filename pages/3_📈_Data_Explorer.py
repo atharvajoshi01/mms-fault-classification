@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 import sys
 
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from dashboard.utils import plot_class_distribution, plot_vibration_signal
@@ -220,5 +220,5 @@ def show():
         """, unsafe_allow_html=True)
 
 
-if __name__ == "__main__":
-    show()
+# Auto-run for Streamlit multi-page
+show()

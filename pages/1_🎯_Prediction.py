@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 import io
 
-project_root = Path(__file__).parent.parent.parent
+project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from dashboard.utils import FaultPredictor, plot_probability_bars, plot_vibration_signal
@@ -267,5 +267,5 @@ def show():
             """)
 
 
-if __name__ == "__main__":
-    show()
+# Auto-run for Streamlit multi-page
+show()
