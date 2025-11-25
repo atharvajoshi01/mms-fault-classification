@@ -57,19 +57,23 @@ def show():
         use_demo = st.button("🎲 Use Demo Data", help="Load sample data for testing")
     
     if use_demo:
-        st.info("Using demo data from dataset...")
-        # Load sample from dataset
+        st.info("Loading demo data...")
+        # Load sample data
         try:
             from src.data_loader import load_mms_csv
-            demo_file = project_root / "dataset/phase_2_2/normal.csv"
+            demo_file = project_root / "sample_data/sample_vibration_data.csv"
             if demo_file.exists():
                 signal = load_mms_csv(demo_file)
                 if len(signal) > 0:
                     signal = signal[0]  # Get first sample
                     st.session_state['demo_signal'] = signal
-                    st.success("Demo data loaded successfully!")
+                    st.success("✅ Demo data loaded successfully!")
+            else:
+                st.error(f"Demo file not found at: {demo_file}")
         except Exception as e:
             st.error(f"Error loading demo data: {e}")
+            import traceback
+            st.code(traceback.format_exc())
     
     # Process uploaded file or demo data
     signal = None
