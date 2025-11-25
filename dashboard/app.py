@@ -94,7 +94,7 @@ st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Home", "🎯 Live Prediction", "📊 Model Analytics", "📈 Data Explorer", "ℹ️ About"]
+    ["🏠 Home", "🎯 Prediction", "📊 Analytics", "📈 Data Explorer", "ℹ️ About"]
 )
 
 st.sidebar.markdown("---")
@@ -113,10 +113,10 @@ if metadata:
 if page == "🏠 Home":
     from pages import home
     home.show()
-elif page == "🎯 Live Prediction":
+elif page == "🎯 Prediction":
     from pages import prediction
     prediction.show()
-elif page == "📊 Model Analytics":
+elif page == "📊 Analytics":
     from pages import analytics
     analytics.show()
 elif page == "📈 Data Explorer":
