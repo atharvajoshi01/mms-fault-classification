@@ -37,7 +37,7 @@ def main():
     logger.info("=" * 80)
 
     # Configuration
-    data_dir = Path('dataset/phase_2_2')
+    data_dir = Path('dataset/phase_2_3')
     output_dir = Path('models/minirocket')
     output_dir.mkdir(parents=True, exist_ok=True)
 

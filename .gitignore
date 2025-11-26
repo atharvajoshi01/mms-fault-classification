@@ -28,6 +28,7 @@ temp_upload.csv
 # Large dataset files - EXCLUDE TO REDUCE REPO SIZE
 dataset/phase_2/*.csv
 dataset/phase_2_2/*.csv
+dataset/phase_2_3/*.csv
 
 # Distribution files
 *.zip
