@@ -51,9 +51,19 @@ def show():
         st.plotly_chart(fig_test, use_container_width=True)
     
     with col3:
-        # Calculate efficiency score (accuracy / training time in minutes)
-        efficiency = metadata.get('test_accuracy', 0) * 100 / (metadata.get('training_time_seconds', 1) / 60)
-        fig_eff = plot_metrics_gauge(min(efficiency / 50, 1.0), "Efficiency Score")
+        # Calculate efficiency score (quality × speed factor)
+        # Quality: test accuracy (0-1)
+        # Speed factor: normalized against 100 min baseline (faster = better)
+        test_acc = metadata.get('test_accuracy', 0)
+        train_time_min = metadata.get('training_time_seconds', 1) / 60
+
+        # Efficiency = accuracy × (baseline_time / actual_time), capped at 1.0
+        # Baseline: 100 minutes for fair comparison
+        baseline_minutes = 100
+        speed_factor = min(baseline_minutes / train_time_min, 1.5)  # Cap at 1.5x bonus
+        efficiency_score = min(test_acc * speed_factor, 1.0)  # Cap at 100%
+
+        fig_eff = plot_metrics_gauge(efficiency_score, "Efficiency Score")
         st.plotly_chart(fig_eff, use_container_width=True)
     
     st.markdown("---")

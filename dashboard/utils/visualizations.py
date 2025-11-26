@@ -173,11 +173,11 @@ def plot_vibration_signal(signal: np.ndarray, title: str = "Vibration Signal") -
 def plot_metrics_gauge(accuracy: float, title: str = "Model Accuracy") -> go.Figure:
     """
     Create gauge chart for metrics.
-    
+
     Args:
         accuracy: Accuracy value (0-1)
         title: Chart title
-        
+
     Returns:
         Plotly figure
     """
@@ -204,11 +204,11 @@ def plot_metrics_gauge(accuracy: float, title: str = "Model Accuracy") -> go.Fig
                 'value': 99
             }
         },
-        number={'suffix': "%"}
+        number={'suffix': "%", 'valueformat': ".2f"}
     ))
-    
+
     fig.update_layout(height=300)
-    
+
     return fig
 
 
