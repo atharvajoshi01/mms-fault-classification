@@ -29,6 +29,7 @@ temp_upload.csv
 dataset/phase_2/*.csv
 dataset/phase_2_2/*.csv
 dataset/phase_2_3/*.csv
+dataset/phase_2_4_combined/*.csv
 
 # Distribution files
 *.zip
