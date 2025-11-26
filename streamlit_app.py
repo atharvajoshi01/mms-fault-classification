@@ -149,9 +149,11 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("## ✨ Key Features")
-    st.markdown("""
-    - **🎯 99.98% Accuracy**: State-of-the-art performance on vibration fault classification
-    - **⚡ Fast Training**: Trains in under 3 minutes
+    accuracy_pct = metadata.get('test_accuracy', 0) * 100
+    train_time_min = metadata.get('training_time_seconds', 0) / 60
+    st.markdown(f"""
+    - **🎯 {accuracy_pct:.2f}% Accuracy**: State-of-the-art performance on vibration fault classification
+    - **⚡ Fast Training**: Trains in {train_time_min:.1f} minutes
     - **🚀 Real-time Inference**: Instant predictions on new data
     - **📊 Multi-axis Support**: Handles X, Y, Z vibration data
     - **🔍 4-class Detection**: Normal, Unbalance, Misalignment, Bearing faults

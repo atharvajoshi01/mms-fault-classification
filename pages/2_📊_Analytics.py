@@ -95,26 +95,26 @@ def show():
     
     # Confusion matrix
     st.markdown("## 🎨 Confusion Matrix")
-    
+
     st.info("""
     The confusion matrix shows how well the model classifies each fault type.
     Perfect predictions appear on the diagonal. Off-diagonal values indicate misclassifications.
     """)
-    
-    # Generate synthetic confusion matrix based on accuracy
-    # In real scenario, this would be loaded from saved metrics
-    classes = metadata.get('classes', ['bearing_fault', 'misalignment_fault', 'normal', 'unbalance_fault'])
-    n_classes = len(classes)
-    test_samples = metadata.get('test_samples', 4312)
-    samples_per_class = test_samples // n_classes
-    
-    # Create near-perfect confusion matrix (99.98% accuracy means ~1 error)
-    cm = np.eye(n_classes) * samples_per_class
-    # Add one misclassification
-    cm[2, 3] = 1  # normal misclassified as unbalance_fault
-    cm[2, 2] -= 1
-    
-    cm = cm.astype(int)
+
+    # Load actual results from saved data
+    results_path = project_root / "models/minirocket/results.json"
+    try:
+        with open(results_path, 'r') as f:
+            results = json.load(f)
+        cm = np.array(results['confusion_matrix'])
+        classes = results['classes']
+        classification_rep = results['classification_report']
+    except Exception as e:
+        st.error(f"Error loading results: {e}")
+        # Fallback to metadata classes
+        classes = metadata.get('classes', ['bearing_fault', 'misalignment_fault', 'normal', 'unbalance_fault'])
+        cm = np.zeros((len(classes), len(classes)))
+        classification_rep = None
     
     col1, col2 = st.columns([2, 1])
     
@@ -124,34 +124,65 @@ def show():
     
     with col2:
         st.markdown("### 📊 Classification Report")
-        
-        # Calculate per-class metrics
-        precision = np.diag(cm) / np.sum(cm, axis=0)
-        recall = np.diag(cm) / np.sum(cm, axis=1)
-        f1 = 2 * (precision * recall) / (precision + recall)
-        
-        report_df = pd.DataFrame({
-            'Class': [c.replace('_', ' ').title() for c in classes],
-            'Precision': [f"{p*100:.2f}%" for p in precision],
-            'Recall': [f"{r*100:.2f}%" for r in recall],
-            'F1-Score': [f"{f*100:.2f}%" for f in f1],
-            'Support': np.sum(cm, axis=1).astype(int)
-        })
-        
+
+        # Use actual classification report if available
+        if classification_rep:
+            report_data = []
+            for class_name in classes:
+                metrics = classification_rep[class_name]
+                report_data.append({
+                    'Class': class_name.replace('_', ' ').title(),
+                    'Precision': f"{metrics['precision']*100:.2f}%",
+                    'Recall': f"{metrics['recall']*100:.2f}%",
+                    'F1-Score': f"{metrics['f1-score']*100:.2f}%",
+                    'Support': int(metrics['support'])
+                })
+            report_df = pd.DataFrame(report_data)
+        else:
+            # Fallback: Calculate from confusion matrix
+            precision = np.diag(cm) / np.sum(cm, axis=0)
+            recall = np.diag(cm) / np.sum(cm, axis=1)
+            f1 = 2 * (precision * recall) / (precision + recall)
+
+            report_df = pd.DataFrame({
+                'Class': [c.replace('_', ' ').title() for c in classes],
+                'Precision': [f"{p*100:.2f}%" for p in precision],
+                'Recall': [f"{r*100:.2f}%" for r in recall],
+                'F1-Score': [f"{f*100:.2f}%" for f in f1],
+                'Support': np.sum(cm, axis=1).astype(int)
+            })
+
         st.dataframe(report_df, use_container_width=True, hide_index=True)
     
     st.markdown("---")
     
     # Per-class performance
     st.markdown("## 📊 Per-Class Performance")
-    
-    metrics_df = pd.DataFrame({
-        'class': classes,
-        'precision': precision,
-        'recall': recall,
-        'f1-score': f1
-    })
-    
+
+    # Build metrics dataframe from actual data
+    if classification_rep:
+        metrics_list = []
+        for class_name in classes:
+            metrics = classification_rep[class_name]
+            metrics_list.append({
+                'class': class_name,
+                'precision': metrics['precision'],
+                'recall': metrics['recall'],
+                'f1-score': metrics['f1-score']
+            })
+        metrics_df = pd.DataFrame(metrics_list)
+    else:
+        # Fallback
+        precision = np.diag(cm) / np.sum(cm, axis=0)
+        recall = np.diag(cm) / np.sum(cm, axis=1)
+        f1 = 2 * (precision * recall) / (precision + recall)
+        metrics_df = pd.DataFrame({
+            'class': classes,
+            'precision': precision,
+            'recall': recall,
+            'f1-score': f1
+        })
+
     fig_perf = plot_performance_comparison(metrics_df)
     st.plotly_chart(fig_perf, use_container_width=True)
     
@@ -189,37 +220,49 @@ def show():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
+        test_acc_pct = metadata.get('test_accuracy', 0) * 100
+        train_time_min = metadata.get('training_time_seconds', 0) / 60
+        st.markdown(f"""
         <div class="success-box">
             <h4>✅ Strengths</h4>
             <ul>
-                <li>Exceptional accuracy (99.98%)</li>
-                <li>Ultra-fast training (~2.5 min)</li>
+                <li>Exceptional accuracy ({test_acc_pct:.2f}%)</li>
+                <li>Ultra-fast training (~{train_time_min:.1f} min)</li>
                 <li>Lightweight model (1.7 MB)</li>
                 <li>Robust across all fault types</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with col2:
-        st.markdown("""
+        # Get per-class performance from classification report
+        if classification_rep:
+            bearing_f1 = classification_rep['bearing_fault']['f1-score'] * 100
+            misalign_f1 = classification_rep['misalignment_fault']['f1-score'] * 100
+            normal_f1 = classification_rep['normal']['f1-score'] * 100
+            unbalance_f1 = classification_rep['unbalance_fault']['f1-score'] * 100
+        else:
+            bearing_f1 = misalign_f1 = normal_f1 = unbalance_f1 = 99.0
+
+        st.markdown(f"""
         <div class="info-box">
             <h4>📊 Performance</h4>
             <ul>
-                <li>Perfect bearing fault detection</li>
-                <li>Perfect misalignment detection</li>
-                <li>99.95% normal classification</li>
-                <li>99.95% unbalance detection</li>
+                <li>{bearing_f1:.2f}% bearing fault F1-score</li>
+                <li>{misalign_f1:.2f}% misalignment F1-score</li>
+                <li>{normal_f1:.2f}% normal F1-score</li>
+                <li>{unbalance_f1:.2f}% unbalance F1-score</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with col3:
-        st.markdown("""
+        train_time_sec = metadata.get('training_time_seconds', 0)
+        st.markdown(f"""
         <div style="padding: 1rem; border-radius: 0.5rem; background-color: #fff3cd; border: 1px solid #ffc107;">
             <h4>⚡ Speed</h4>
             <ul>
-                <li>Training: 154 seconds</li>
+                <li>Training: {train_time_sec:.0f} seconds</li>
                 <li>Inference: < 1 second</li>
                 <li>Suitable for real-time use</li>
                 <li>Scalable to large datasets</li>

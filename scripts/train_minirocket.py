@@ -198,6 +198,23 @@ def main():
 
     logger.info(f"✓ Metadata saved to: {metadata_path}")
 
+    # Save confusion matrix and classification report for dashboard
+    results_data = {
+        'confusion_matrix': cm.tolist(),
+        'classification_report': classification_report(
+            y_test, y_pred,
+            target_names=label_encoder.classes_,
+            output_dict=True
+        ),
+        'classes': label_encoder.classes_.tolist()
+    }
+
+    results_path = output_dir / 'results.json'
+    with open(results_path, 'w') as f:
+        json.dump(results_data, f, indent=2)
+
+    logger.info(f"✓ Results saved to: {results_path}")
+
     # Summary
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING COMPLETE - SUMMARY")
