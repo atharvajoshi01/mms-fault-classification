@@ -21,15 +21,21 @@ from dashboard.utils import (
 
 def show():
     """Display analytics page."""
-    
+
     st.markdown('<h1 class="main-header">📊 Model Analytics</h1>', unsafe_allow_html=True)
     st.markdown(
         '<p class="sub-header">Comprehensive model performance analysis</p>',
         unsafe_allow_html=True
     )
-    
+
+    # Model paths
+    model_dir = project_root / "models/minirocket"
+    phase_desc = "4-Class Individual Faults"
+
+    metadata_path = model_dir / "metadata.json"
+    results_path = model_dir / "results.json"
+
     # Load metadata
-    metadata_path = project_root / "models/minirocket/metadata.json"
     try:
         with open(metadata_path, 'r') as f:
             metadata = json.load(f)
@@ -38,7 +44,8 @@ def show():
         return
     
     # Performance overview
-    st.markdown("## 🎯 Performance Overview")
+    st.markdown(f"## 🎯 Performance Overview - {phase_desc}")
+    st.info(f"📍 Analyzing MiniRocket model with **{metadata.get('num_classes', 0)} classes**")
     
     col1, col2, col3 = st.columns(3)
     
@@ -112,7 +119,6 @@ def show():
     """)
 
     # Load actual results from saved data
-    results_path = project_root / "models/minirocket/results.json"
     try:
         with open(results_path, 'r') as f:
             results = json.load(f)
@@ -205,10 +211,12 @@ def show():
     
     with col1:
         st.markdown("### MiniRocket Transform")
+        num_kernels = metadata.get('num_kernels', 10000)
+        num_features = num_kernels * 3 - 12  # Formula: (num_kernels * 3) - 12
         st.markdown(f"""
-        - **Random Kernels**: {metadata.get('num_kernels', 10000):,}
+        - **Random Kernels**: {num_kernels:,}
         - **Input Shape**: (1024, 3)
-        - **Output Features**: 29,988
+        - **Output Features**: {num_features:,}
         - **Transform Type**: Random Convolutional Kernel Transform
         - **Pooling**: PPV (Proportion of Positive Values)
         """)
@@ -246,22 +254,26 @@ def show():
 
     with col2:
         # Get per-class performance from classification report
-        if classification_rep:
-            bearing_f1 = classification_rep['bearing_fault']['f1-score'] * 100
-            misalign_f1 = classification_rep['misalignment_fault']['f1-score'] * 100
-            normal_f1 = classification_rep['normal']['f1-score'] * 100
-            unbalance_f1 = classification_rep['unbalance_fault']['f1-score'] * 100
-        else:
-            bearing_f1 = misalign_f1 = normal_f1 = unbalance_f1 = 99.0
-
         st.markdown(f"""
         <div class="info-box">
-            <h4>📊 Performance</h4>
+            <h4>📊 Top Performers</h4>
             <ul>
-                <li>{bearing_f1:.2f}% bearing fault F1-score</li>
-                <li>{misalign_f1:.2f}% misalignment F1-score</li>
-                <li>{normal_f1:.2f}% normal F1-score</li>
-                <li>{unbalance_f1:.2f}% unbalance F1-score</li>
+        """, unsafe_allow_html=True)
+
+        if classification_rep:
+            # Sort classes by F1-score and show top 4
+            class_f1_scores = [(c, classification_rep[c]['f1-score'] * 100)
+                              for c in classes if c in classification_rep]
+            class_f1_scores.sort(key=lambda x: x[1], reverse=True)
+
+            for class_name, f1_score in class_f1_scores[:4]:
+                display_name = class_name.replace('_', ' ').title()
+                st.markdown(f"                <li>{f1_score:.2f}% {display_name}</li>",
+                           unsafe_allow_html=True)
+        else:
+            st.markdown("                <li>No data available</li>", unsafe_allow_html=True)
+
+        st.markdown("""
             </ul>
         </div>
         """, unsafe_allow_html=True)

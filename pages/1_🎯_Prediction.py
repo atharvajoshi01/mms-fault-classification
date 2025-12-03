@@ -19,7 +19,11 @@ from dashboard.utils import FaultPredictor, plot_probability_bars, plot_vibratio
 def load_predictor():
     """Load predictor model."""
     try:
-        predictor = FaultPredictor()
+        predictor = FaultPredictor(
+            model_path="models/minirocket/minirocket_model.pkl",
+            label_encoder_path="models/minirocket/label_encoder.pkl",
+            scaler_path="models/minirocket/scaler.pkl"
+        )
         return predictor
     except Exception as e:
         st.error(f"Error loading model: {e}")
@@ -28,16 +32,16 @@ def load_predictor():
 
 def show():
     """Display prediction page."""
-    
+
     st.markdown('<h1 class="main-header">🎯 Live Fault Prediction</h1>', unsafe_allow_html=True)
     st.markdown(
         '<p class="sub-header">Upload vibration data for instant fault classification</p>',
         unsafe_allow_html=True
     )
-    
+
     # Load predictor
     predictor = load_predictor()
-    
+
     if predictor is None:
         st.error("Failed to load prediction model. Please check the model files.")
         return
@@ -180,7 +184,7 @@ def show():
                     
                     # Recommendation based on prediction
                     st.markdown("### 💡 Recommendation")
-                    
+
                     if predicted_class == 'normal':
                         st.success("✅ Equipment is operating normally. Continue routine monitoring.")
                     elif predicted_class == 'unbalance_fault':
