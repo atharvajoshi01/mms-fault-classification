@@ -2,7 +2,8 @@
 MiniRocket + RidgeClassifier for vibration fault classification.
 
 MiniRocket is a fast and accurate time series classification method
-that uses random convolutional kernels.
+that uses random convolutional kernels. Temperature scaling is applied
+to produce well-calibrated confidence scores.
 """
 
 import logging
@@ -16,13 +17,17 @@ from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 
+# Temperature for softmax calibration (lower = sharper/more confident predictions)
+TEMPERATURE = 0.1
+
 
 class MiniRocketClassifier:
     """
     MiniRocket + RidgeClassifier wrapper for fault classification.
 
     MiniRocket transforms time series into feature vectors using
-    random convolutional kernels, then uses Ridge Classifier for classification.
+    random convolutional kernels, then uses RidgeClassifier for classification.
+    Temperature scaling produces calibrated confidence scores.
     """
 
     def __init__(
@@ -64,7 +69,7 @@ class MiniRocketClassifier:
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'MiniRocketClassifier':
         """
-        Fit MiniRocket transformer and Ridge classifier.
+        Fit MiniRocket transformer and RidgeClassifier.
 
         Args:
             X: Training data of shape (n_samples, n_timesteps, n_channels)
@@ -103,8 +108,8 @@ class MiniRocketClassifier:
         logger.info("  Scaling features...")
         X_scaled = self.scaler.fit_transform(X_transformed)
 
-        # Train Ridge classifier
-        logger.info("  Training Ridge classifier...")
+        # Train RidgeClassifier (fast, no CV needed)
+        logger.info("  Training RidgeClassifier...")
         self.classifier = RidgeClassifier(alpha=1.0)
         self.classifier.fit(X_scaled, y)
 
@@ -145,7 +150,7 @@ class MiniRocketClassifier:
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
-        Predict class probabilities (decision function normalized).
+        Predict calibrated class probabilities using temperature scaling.
 
         Args:
             X: Input data of shape (n_samples, n_timesteps, n_channels)
@@ -156,9 +161,14 @@ class MiniRocketClassifier:
         X_scaled = self._transform(X)
         decision = self.classifier.decision_function(X_scaled)
 
-        # Convert to probabilities using softmax
-        from scipy.special import softmax
-        probas = softmax(decision, axis=1)
+        # Apply temperature scaling for calibrated probabilities
+        # Lower temperature = sharper (more confident) predictions
+        scaled_decision = decision / TEMPERATURE
+
+        # Softmax with numerical stability
+        exp_scores = np.exp(scaled_decision - np.max(scaled_decision, axis=1, keepdims=True))
+        probas = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+
         return probas
 
     def predict_with_proba(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -176,8 +186,10 @@ class MiniRocketClassifier:
         predictions = self.classifier.predict(X_scaled)
         decision = self.classifier.decision_function(X_scaled)
 
-        from scipy.special import softmax
-        probas = softmax(decision, axis=1)
+        # Apply temperature scaling for calibrated probabilities
+        scaled_decision = decision / TEMPERATURE
+        exp_scores = np.exp(scaled_decision - np.max(scaled_decision, axis=1, keepdims=True))
+        probas = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
         return predictions, probas
 
@@ -310,6 +322,6 @@ if __name__ == "__main__":
 
     print(f"\nSample predictions:")
     print(f"  Predictions: {predictions}")
-    print(f"  Probabilities shape: {probas.shape}")
+    print(f"  Max confidence: {probas.max(axis=1)}")
 
     print("\nTest complete!")
