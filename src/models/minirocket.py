@@ -112,6 +112,24 @@ class MiniRocketClassifier:
 
         return self
 
+    def _transform(self, X: np.ndarray) -> np.ndarray:
+        """
+        Transform data using MiniRocket (cached for efficiency).
+
+        Args:
+            X: Input data of shape (n_samples, n_timesteps, n_channels)
+
+        Returns:
+            Scaled transformed features
+        """
+        if self.minirocket is None or self.classifier is None:
+            raise ValueError("Model must be fitted before prediction")
+
+        X_reshaped = self._reshape_data(X)
+        X_transformed = self.minirocket.transform(X_reshaped)
+        X_scaled = self.scaler.transform(X_transformed)
+        return X_scaled
+
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
         Predict class labels.
@@ -122,15 +140,7 @@ class MiniRocketClassifier:
         Returns:
             Predicted labels
         """
-        if self.minirocket is None or self.classifier is None:
-            raise ValueError("Model must be fitted before prediction")
-
-        # Reshape and transform
-        X_reshaped = self._reshape_data(X)
-        X_transformed = self.minirocket.transform(X_reshaped)
-        X_scaled = self.scaler.transform(X_transformed)
-
-        # Predict
+        X_scaled = self._transform(X)
         return self.classifier.predict(X_scaled)
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
@@ -143,22 +153,33 @@ class MiniRocketClassifier:
         Returns:
             Class probabilities of shape (n_samples, n_classes)
         """
-        if self.minirocket is None or self.classifier is None:
-            raise ValueError("Model must be fitted before prediction")
-
-        # Reshape and transform
-        X_reshaped = self._reshape_data(X)
-        X_transformed = self.minirocket.transform(X_reshaped)
-        X_scaled = self.scaler.transform(X_transformed)
-
-        # Get decision function
+        X_scaled = self._transform(X)
         decision = self.classifier.decision_function(X_scaled)
 
         # Convert to probabilities using softmax
         from scipy.special import softmax
         probas = softmax(decision, axis=1)
-
         return probas
+
+    def predict_with_proba(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Predict class labels AND probabilities in one pass (faster).
+
+        Args:
+            X: Input data of shape (n_samples, n_timesteps, n_channels)
+
+        Returns:
+            Tuple of (predictions, probabilities)
+        """
+        X_scaled = self._transform(X)
+
+        predictions = self.classifier.predict(X_scaled)
+        decision = self.classifier.decision_function(X_scaled)
+
+        from scipy.special import softmax
+        probas = softmax(decision, axis=1)
+
+        return predictions, probas
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         """

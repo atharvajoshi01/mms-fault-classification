@@ -8,6 +8,7 @@ from typing import Dict, Any, Tuple, Optional
 import numpy as np
 import pandas as pd
 from src.models.minirocket import MiniRocketClassifier
+from src.preprocessing import normalize_data
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,6 @@ class FaultPredictor:
             signal = signal[np.newaxis, :]  # Add batch dimension
         
         # Normalize using saved scaler
-        from src.preprocessing import normalize_data
         signal_normalized, _ = normalize_data(signal, scaler=self.scaler, fit=False)
         
         return signal_normalized
@@ -77,10 +77,9 @@ class FaultPredictor:
         """
         # Preprocess
         signal_preprocessed = self.preprocess_signal(signal)
-        
-        # Predict
-        predictions = self.model.predict(signal_preprocessed)
-        probabilities = self.model.predict_proba(signal_preprocessed)
+
+        # Predict (single pass - avoids double MiniRocket transform)
+        predictions, probabilities = self.model.predict_with_proba(signal_preprocessed)
         
         # Get class names
         predicted_classes = [self.class_names[p] for p in predictions]
