@@ -114,8 +114,8 @@ def create_kernel_visualization() -> go.Figure:
 def create_comparison_chart() -> go.Figure:
     """Create model comparison chart."""
     models = ['MiniRocket', 'CNN (Deep Learning)', 'Random Forest', 'SVM']
-    accuracy = [99.98, 99.5, 95.2, 93.8]
-    training_time = [2.5, 45, 5, 15]  # minutes
+    accuracy = [99.96, 99.5, 95.2, 93.8]
+    training_time = [80, 180, 15, 45]  # minutes (with 36K samples)
     inference_time = [0.8, 2.5, 1.2, 1.5]  # seconds per 1000 samples
 
     fig = make_subplots(
@@ -267,16 +267,16 @@ def show():
         st.success("""
         **Highest Accuracy**
 
-        99.98% test accuracy - better than deep learning models that require
+        99.96% test accuracy - better than deep learning models that require
         hours of training and GPU resources.
         """)
 
     with col2:
         st.info("""
-        **Fastest Training**
+        **CPU-Only Training**
 
-        ~2.5 minutes on CPU - no GPU required. Train and update models quickly
-        as new data arrives.
+        No GPU required - trains on standard hardware. Perfect for industrial
+        environments without specialized equipment.
         """)
 
     with col3:
@@ -332,7 +332,7 @@ def show():
             <li><strong>No Deep Learning Required:</strong> Achieves state-of-the-art accuracy with simple, interpretable methods</li>
             <li><strong>Fast & Efficient:</strong> Trains in minutes, predicts in milliseconds</li>
             <li><strong>Production Ready:</strong> Small model size (1.7 MB), no GPU needed</li>
-            <li><strong>Highly Accurate:</strong> 99.98% accuracy on real industrial data</li>
+            <li><strong>Highly Accurate:</strong> 99.96% accuracy on real industrial data</li>
             <li><strong>Explainable:</strong> Feature importance can be analyzed for each fault type</li>
         </ul>
     </div>
@@ -357,7 +357,7 @@ def show():
         st.markdown("""
         The current model is trained on 4 classes. To detect new fault types:
         1. Collect labeled data for the new fault
-        2. Retrain the model (takes ~2-3 minutes)
+        2. Retrain the model (no GPU required)
         3. Deploy the updated model
 
         The MiniRocket architecture generalizes well to new patterns.
@@ -367,7 +367,7 @@ def show():
         st.markdown("""
         We use **temperature scaling** to calibrate confidence scores:
         - Predictions above 95% confidence are highly reliable
-        - The 99.98% accuracy means only ~2 in 10,000 predictions are wrong
+        - The 99.96% accuracy means only ~4 in 10,000 predictions are wrong
         - For critical decisions, we recommend confirming with additional sensors
         """)
 

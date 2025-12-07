@@ -63,7 +63,7 @@ with col1:
     st.metric("Test Accuracy", f"{metadata.get('test_accuracy', 0)*100:.2f}%", "World-class")
 
 with col2:
-    st.metric("Training Time", f"{metadata.get('training_time_seconds', 0)/60:.1f} min", "Ultra-fast")
+    st.metric("Training Time", f"{metadata.get('training_time_seconds', 0)/60:.1f} min", "CPU-only")
 
 with col3:
     total_samples = metadata.get('train_samples', 0) + metadata.get('test_samples', 0)
@@ -99,4 +99,6 @@ st.markdown("""
 1. **Prediction** → Upload CSV and get instant fault classification
 2. **Analytics** → View model performance and confusion matrix
 3. **About** → Learn about MiniRocket algorithm
+4. **FFT Analysis** → Compare fault frequency signatures
+5. **Model Explainer** → Visual guide for presentations
 """)
