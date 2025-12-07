@@ -45,7 +45,21 @@ class FaultPredictor:
         
         self.class_names = list(self.label_encoder.classes_)
         logger.info(f"Predictor initialized. Classes: {self.class_names}")
-    
+
+        # Warm up the model to trigger JIT compilation
+        self._warmup()
+
+    def _warmup(self):
+        """
+        Warm up the model with a dummy prediction.
+
+        This triggers JIT compilation so the first real prediction is fast.
+        """
+        logger.info("Warming up model...")
+        dummy_signal = np.zeros((1024, 3), dtype=np.float32)
+        _ = self.predict(dummy_signal)
+        logger.info("Model warm-up complete")
+
     def preprocess_signal(self, signal: np.ndarray) -> np.ndarray:
         """
         Preprocess signal for prediction.

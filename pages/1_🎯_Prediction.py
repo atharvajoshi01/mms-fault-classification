@@ -15,9 +15,9 @@ sys.path.insert(0, str(project_root))
 from dashboard.utils import FaultPredictor, plot_probability_bars, plot_vibration_signal
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner="Loading MiniRocket model...")
 def load_predictor():
-    """Load predictor model."""
+    """Load predictor model (includes warm-up for fast inference)."""
     try:
         predictor = FaultPredictor(
             model_path="models/minirocket/minirocket_model.pkl",
