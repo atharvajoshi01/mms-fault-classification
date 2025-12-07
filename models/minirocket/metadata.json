@@ -5,12 +5,12 @@
   "test_samples": 7211,
   "train_accuracy": 1.0,
   "test_accuracy": 0.9995839689363473,
-  "training_time_seconds": 5233.446349143982,
+  "training_time_seconds": 4830.808931112289,
   "classes": [
     "bearing_fault",
     "misalignment_fault",
     "normal",
     "unbalance_fault"
   ],
-  "timestamp": "2025-11-25T23:15:17.759600"
+  "timestamp": "2025-12-07T15:58:39.209164"
 }

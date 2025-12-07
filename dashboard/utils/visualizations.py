@@ -13,39 +13,65 @@ from typing import Dict, List, Optional
 def plot_confusion_matrix(cm: np.ndarray, class_names: List[str]) -> go.Figure:
     """
     Create interactive confusion matrix heatmap.
-    
+
     Args:
         cm: Confusion matrix
         class_names: List of class names
-        
+
     Returns:
         Plotly figure
     """
-    # Normalize
+    # Normalize for coloring
     cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    
-    # Create heatmap
+
+    # Format class names for display
+    display_names = [name.replace('_', ' ').title() for name in class_names]
+
+    # Create text annotations showing count and percentage
+    text_annotations = []
+    for i in range(len(class_names)):
+        row = []
+        for j in range(len(class_names)):
+            count = cm[i][j]
+            pct = cm_normalized[i][j] * 100
+            if i == j:  # Diagonal - correct predictions
+                row.append(f"<b>{count}</b><br>({pct:.1f}%)")
+            else:  # Off-diagonal - errors
+                row.append(f"{count}<br>({pct:.1f}%)")
+        text_annotations.append(row)
+
+    # Create heatmap with custom colorscale (green diagonal, red off-diagonal)
     fig = go.Figure(data=go.Heatmap(
         z=cm_normalized,
-        x=class_names,
-        y=class_names,
-        colorscale='Blues',
-        text=cm,
+        x=display_names,
+        y=display_names,
+        colorscale=[
+            [0, 'rgb(255, 255, 255)'],
+            [0.5, 'rgb(66, 133, 244)'],
+            [1, 'rgb(15, 77, 146)']
+        ],
+        text=text_annotations,
         texttemplate='%{text}',
-        textfont={"size": 16},
-        hovertemplate='True: %{y}<br>Predicted: %{x}<br>Count: %{text}<br>Rate: %{z:.2%}<extra></extra>',
-        colorbar=dict(title="Rate")
+        textfont={"size": 14},
+        hovertemplate='True: %{y}<br>Predicted: %{x}<br>Rate: %{z:.2%}<extra></extra>',
+        colorbar=dict(title="Accuracy", tickformat=".0%"),
+        showscale=True
     ))
-    
+
     fig.update_layout(
-        title="Confusion Matrix",
+        title=dict(
+            text="Confusion Matrix",
+            font=dict(size=20)
+        ),
         xaxis_title="Predicted Class",
         yaxis_title="True Class",
-        width=600,
+        width=650,
         height=600,
-        font=dict(size=12)
+        font=dict(size=14),
+        xaxis=dict(tickangle=45),
+        yaxis=dict(autorange='reversed')  # Put first class at top
     )
-    
+
     return fig
 
 

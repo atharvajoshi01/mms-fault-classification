@@ -165,15 +165,15 @@ def show():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("Test Accuracy", "99.98%")
-        st.metric("Training Time", "2.5 min")
+        st.metric("Test Accuracy", "99.96%")
+        st.metric("Training Samples", "28,842")
 
     with col2:
-        st.metric("Precision", "99.98%")
-        st.metric("Recall", "99.98%")
+        st.metric("Precision", "99.96%")
+        st.metric("Recall", "99.96%")
 
     with col3:
-        st.metric("F1-Score", "99.98%")
+        st.metric("F1-Score", "99.96%")
         st.metric("Model Size", "1.7 MB")
 
     st.markdown("""
@@ -181,8 +181,8 @@ def show():
     |------------|----------|-----------|
     | Bearing | 100.00% | Perfect |
     | Misalignment | 100.00% | Perfect |
-    | Normal | 99.95% | Excellent |
-    | Unbalance | 99.95% | Excellent |
+    | Normal | 99.92% | Excellent |
+    | Unbalance | 99.92% | Excellent |
     """)
 
     st.markdown("---")
