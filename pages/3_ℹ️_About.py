@@ -13,8 +13,8 @@ project_root = Path(__file__).parent.parent
 
 def create_fft_comparison():
     """Create clean FFT visualization with separate subplots for each fault type."""
-    freq = np.linspace(0, 250, 500)
-    rotation_freq = 60  # 60 Hz = 3600 RPM
+    freq = np.linspace(0, 100, 500)
+    rotation_freq = 20  # 20 Hz typical (data collected at 15, 20, 25 Hz)
 
     def gaussian_peak(f, center, width, amplitude):
         return amplitude * np.exp(-((f - center) ** 2) / (2 * width ** 2))
@@ -22,14 +22,14 @@ def create_fft_comparison():
     # Generate clean spectra for each fault type
     spectra = {
         'Normal': 0.05 * np.ones_like(freq),
-        'Unbalance': 0.05 + gaussian_peak(freq, 60, 5, 0.9),
-        'Misalignment': 0.05 + gaussian_peak(freq, 60, 5, 0.3) +
-                        gaussian_peak(freq, 120, 5, 0.95) +
-                        gaussian_peak(freq, 180, 5, 0.5),
-        'Bearing': 0.05 + gaussian_peak(freq, 60, 5, 0.2) +
-                   gaussian_peak(freq, 150, 8, 0.6) +
-                   gaussian_peak(freq, 200, 8, 0.5) +
-                   gaussian_peak(freq, 250, 8, 0.4)
+        'Unbalance': 0.05 + gaussian_peak(freq, 20, 3, 0.9),
+        'Misalignment': 0.05 + gaussian_peak(freq, 20, 3, 0.3) +
+                        gaussian_peak(freq, 40, 3, 0.95) +
+                        gaussian_peak(freq, 60, 3, 0.5),
+        'Bearing': 0.05 + gaussian_peak(freq, 20, 3, 0.2) +
+                   gaussian_peak(freq, 55, 5, 0.6) +
+                   gaussian_peak(freq, 75, 5, 0.5) +
+                   gaussian_peak(freq, 95, 5, 0.4)
     }
 
     colors = {'Normal': '#2ECC71', 'Unbalance': '#F39C12',
@@ -37,7 +37,7 @@ def create_fft_comparison():
 
     descriptions = {
         'Normal': 'Flat spectrum - healthy',
-        'Unbalance': 'Strong 1× peak (60 Hz)',
+        'Unbalance': 'Strong 1× peak (20 Hz)',
         'Misalignment': 'Strong 2× & 3× harmonics',
         'Bearing': 'High-frequency peaks'
     }
@@ -68,9 +68,9 @@ def create_fft_comparison():
         # Add harmonic markers for relevant plots
         if name in ['Unbalance', 'Misalignment']:
             for mult, label in [(1, '1×'), (2, '2×'), (3, '3×')]:
-                if mult * 60 <= 250:
+                if mult * 20 <= 100:
                     fig.add_vline(
-                        x=mult * 60, line_dash="dot", line_color="rgba(0,0,0,0.3)",
+                        x=mult * 20, line_dash="dot", line_color="rgba(0,0,0,0.3)",
                         line_width=1, row=row, col=col
                     )
 
@@ -172,9 +172,9 @@ def show():
     st.plotly_chart(fig, use_container_width=True)
 
     st.info("""
-    **Key Insight**: At 3600 RPM (60 Hz rotation), unbalance shows 1× peak at 60 Hz,
-    while misalignment shows dominant 2× peak at 120 Hz. MiniRocket learns these
-    patterns automatically from raw time-domain data.
+    **Key Insight**: Data was collected at 15, 20, and 25 Hz rotation speeds. Unbalance shows
+    a strong 1× peak at the rotation frequency, while misalignment shows dominant 2× and 3×
+    harmonic peaks. MiniRocket learns these patterns automatically from raw time-domain data.
     """)
 
     st.markdown("---")

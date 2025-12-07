@@ -47,7 +47,7 @@ def generate_synthetic_signal(fault_type: str, n_samples: int = 1024) -> np.ndar
     - Bearing: High-frequency noise components
     """
     t = np.linspace(0, 1, n_samples)
-    running_speed = 10  # Hz (600 RPM)
+    running_speed = 20  # Hz (data collected at 15, 20, 25 Hz)
 
     # Base noise for all signals
     noise = 0.05 * np.random.randn(n_samples, 3)
@@ -176,8 +176,8 @@ def plot_fft_comparison(signal1: np.ndarray, signal2: np.ndarray,
         row=2, col=2
     )
 
-    # Mark harmonic frequencies (assuming ~10Hz running speed)
-    running_speed = 10  # Hz (example)
+    # Mark harmonic frequencies (data collected at 15-25Hz)
+    running_speed = 20  # Hz (typical)
     harmonics = [running_speed * i for i in range(1, 6)]
     harmonic_labels = ['1×', '2×', '3×', '4×', '5×']
 
@@ -233,7 +233,7 @@ def plot_harmonic_analysis(signal: np.ndarray, label: str) -> go.Figure:
         )
 
         # Add harmonic markers
-        running_speed = 10
+        running_speed = 20
         for mult, h_label in [(1, '1×'), (2, '2×'), (3, '3×')]:
             h = running_speed * mult
             fig.add_vline(
@@ -374,10 +374,10 @@ def show():
                 # Add interpretation
                 st.markdown("### Interpretation")
                 if fault_type == 'unbalance_fault':
-                    st.success("Notice the dominant peak at **10 Hz (1×)** - this is the characteristic "
-                              "signature of mass unbalance.")
+                    st.success("Notice the dominant peak at **1× rotation frequency (15-25 Hz)** - this is "
+                              "the characteristic signature of mass unbalance.")
                 elif fault_type == 'misalignment_fault':
-                    st.success("Notice strong peaks at **20 Hz (2×)** and **30 Hz (3×)** - these harmonics "
+                    st.success("Notice strong peaks at **2× and 3× harmonics (40-75 Hz)** - these harmonics "
                               "indicate shaft misalignment.")
                 elif fault_type == 'bearing_fault':
                     st.success("Notice the broad high-frequency content - bearing defects create "
