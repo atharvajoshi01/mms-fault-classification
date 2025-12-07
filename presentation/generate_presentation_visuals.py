@@ -177,8 +177,8 @@ def create_fault_comparison():
     titles = list(signals.keys())
     descriptions = [
         'Healthy operation\nLow amplitude, mostly noise',
-        'Mass imbalance\nStrong 1× frequency (10 Hz)',
-        'Shaft offset\nStrong 2× and 3× harmonics',
+        'Mass imbalance\nDistinct frequency pattern',
+        'Shaft offset\nMultiple frequency peaks',
         'Bearing degradation\nHigh-frequency components'
     ]
 
@@ -217,11 +217,11 @@ def create_fft_comparison():
     spectra = {
         'Normal': 0.05 * np.ones_like(freq) + 0.02*np.random.rand(len(freq)),
         'Unbalance': (0.05 * np.ones_like(freq) +
-                     gaussian_peak(freq, 20, 2, 0.8)),  # Strong 1× at 20Hz
+                     gaussian_peak(freq, 20, 2, 0.8)),  # Strong peak at 20Hz
         'Misalignment': (0.05 * np.ones_like(freq) +
-                        gaussian_peak(freq, 20, 2, 0.3) +   # 1× at 20Hz
-                        gaussian_peak(freq, 40, 2, 0.9) +   # 2× at 40Hz (dominant)
-                        gaussian_peak(freq, 60, 2, 0.5)),   # 3× at 60Hz
+                        gaussian_peak(freq, 20, 2, 0.3) +   # Peak at 20Hz
+                        gaussian_peak(freq, 40, 2, 0.9) +   # Peak at 40Hz (dominant)
+                        gaussian_peak(freq, 60, 2, 0.5)),   # Peak at 60Hz
         'Bearing': (0.05 * np.ones_like(freq) +
                    gaussian_peak(freq, 20, 2, 0.2) +
                    gaussian_peak(freq, 55, 4, 0.5) +
@@ -239,14 +239,6 @@ def create_fft_comparison():
         ax.set_ylabel('Magnitude', fontsize=12)
         ax.set_xlim(0, 100)
         ax.set_ylim(0, 1.1)
-
-        # Add harmonic markers
-        if name != 'Normal':
-            for mult, label in [(1, '1×'), (2, '2×'), (3, '3×')]:
-                if mult * running_speed <= 100:
-                    ax.axvline(mult * running_speed, color='gray', linestyle='--',
-                              alpha=0.5, linewidth=1)
-                    ax.text(mult * running_speed + 1, 1.0, label, fontsize=9, color='gray')
 
     plt.suptitle('FFT Analysis: Fault Frequency Signatures', fontsize=20, fontweight='bold', y=1.02)
     plt.tight_layout()
@@ -278,14 +270,12 @@ def create_unbalance_vs_misalignment():
     unbalance_spectrum = 0.05 + gaussian_peak(freq, 20, 2, 0.9)
     ax1.fill_between(freq, unbalance_spectrum, alpha=0.4, color=COLORS['unbalance'])
     ax1.plot(freq, unbalance_spectrum, color=COLORS['unbalance'], linewidth=2.5)
-    ax1.axvline(20, color='red', linestyle='--', linewidth=2, label='1× (20 Hz)')
-    ax1.set_title('UNBALANCE: Dominant 1× Frequency', fontsize=14, fontweight='bold',
+    ax1.set_title('UNBALANCE: Distinct Low-Frequency Peak', fontsize=14, fontweight='bold',
                   color=COLORS['unbalance'])
     ax1.set_xlabel('Frequency (Hz)')
     ax1.set_ylabel('Magnitude')
-    ax1.legend(loc='upper right')
     ax1.set_xlim(0, 100)
-    ax1.annotate('Primary indicator:\nSingle peak at rotation speed',
+    ax1.annotate('Primary indicator:\nSingle distinct peak',
                  xy=(20, 0.9), xytext=(50, 0.7),
                  fontsize=10, arrowprops=dict(arrowstyle='->', color='gray'),
                  bbox=dict(boxstyle='round', facecolor='white', edgecolor=COLORS['unbalance']))
@@ -296,16 +286,12 @@ def create_unbalance_vs_misalignment():
                             gaussian_peak(freq, 40, 2, 0.9) + gaussian_peak(freq, 60, 2, 0.5))
     ax2.fill_between(freq, misalignment_spectrum, alpha=0.4, color=COLORS['misalignment'])
     ax2.plot(freq, misalignment_spectrum, color=COLORS['misalignment'], linewidth=2.5)
-    ax2.axvline(20, color='gray', linestyle='--', linewidth=1.5, alpha=0.5)
-    ax2.axvline(40, color='red', linestyle='--', linewidth=2, label='2× (40 Hz)')
-    ax2.axvline(60, color='orange', linestyle='--', linewidth=1.5, label='3× (60 Hz)')
-    ax2.set_title('MISALIGNMENT: Strong 2× and 3× Harmonics', fontsize=14, fontweight='bold',
+    ax2.set_title('MISALIGNMENT: Multiple Frequency Peaks', fontsize=14, fontweight='bold',
                   color=COLORS['misalignment'])
     ax2.set_xlabel('Frequency (Hz)')
     ax2.set_ylabel('Magnitude')
-    ax2.legend(loc='upper right')
     ax2.set_xlim(0, 100)
-    ax2.annotate('Primary indicator:\nMultiple harmonic peaks',
+    ax2.annotate('Primary indicator:\nMultiple frequency peaks',
                  xy=(40, 0.9), xytext=(70, 0.7),
                  fontsize=10, arrowprops=dict(arrowstyle='->', color='gray'),
                  bbox=dict(boxstyle='round', facecolor='white', edgecolor=COLORS['misalignment']))
@@ -316,7 +302,7 @@ def create_unbalance_vs_misalignment():
 
     table_data = [
         ['Characteristic', 'Unbalance', 'Misalignment'],
-        ['Dominant Frequency', '1× (15-25 Hz)', '2× and 3× (30-75 Hz)'],
+        ['Frequency Pattern', 'Single distinct peak', 'Multiple frequency peaks'],
         ['Cause', 'Uneven mass distribution', 'Shaft offset/angular error'],
         ['Phase Relationship', 'In-phase radial', '180° axial opposition'],
         ['Typical Fix', 'Add/remove balance weights', 'Realign coupling/bearings'],
@@ -424,16 +410,15 @@ def create_confusion_matrix():
     """Create confusion matrix visualization."""
     fig, ax = plt.subplots(figsize=(10, 8), facecolor='white')
 
-    # Simulated confusion matrix based on 99.96% accuracy
-    # ~7211 test samples, ~4 errors
+    # Actual confusion matrix from model results
+    # 7211 test samples, 3 errors total (99.96% accuracy)
     classes = ['Bearing', 'Misalignment', 'Normal', 'Unbalance']
-    n_per_class = 7211 // 4  # ~1803 per class
 
     cm = np.array([
-        [1803, 0, 0, 0],      # Bearing - perfect
-        [0, 1802, 0, 0],      # Misalignment - perfect
-        [0, 0, 1801, 2],      # Normal - 2 errors
-        [1, 0, 0, 1802]       # Unbalance - 1 error
+        [1805, 0, 0, 0],      # Bearing - perfect
+        [0, 1805, 0, 0],      # Misalignment - perfect
+        [0, 0, 1798, 2],      # Normal - 2 misclassified as Unbalance
+        [0, 0, 1, 1800]       # Unbalance - 1 misclassified as Normal
     ])
 
     # Create heatmap

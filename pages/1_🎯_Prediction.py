@@ -33,11 +33,8 @@ def load_predictor():
 def show():
     """Display prediction page."""
 
-    st.markdown('<h1 class="main-header">🎯 Live Fault Prediction</h1>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="sub-header">Upload vibration data for instant fault classification</p>',
-        unsafe_allow_html=True
-    )
+    st.markdown("# 🎯 Live Fault Prediction")
+    st.markdown("*Upload vibration data for instant fault classification*")
 
     # Load predictor
     predictor = load_predictor()

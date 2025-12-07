@@ -14,12 +14,11 @@ project_root = Path(__file__).parent.parent
 def create_fft_comparison():
     """Create clean FFT visualization with separate subplots for each fault type."""
     freq = np.linspace(0, 100, 500)
-    rotation_freq = 20  # 20 Hz typical (data collected at 15, 20, 25 Hz)
 
     def gaussian_peak(f, center, width, amplitude):
         return amplitude * np.exp(-((f - center) ** 2) / (2 * width ** 2))
 
-    # Generate clean spectra for each fault type
+    # Generate representative spectra for each fault type
     spectra = {
         'Normal': 0.05 * np.ones_like(freq),
         'Unbalance': 0.05 + gaussian_peak(freq, 20, 3, 0.9),
@@ -37,9 +36,9 @@ def create_fft_comparison():
 
     descriptions = {
         'Normal': 'Flat spectrum - healthy',
-        'Unbalance': 'Strong 1× peak (20 Hz)',
-        'Misalignment': 'Strong 2× & 3× harmonics',
-        'Bearing': 'High-frequency peaks'
+        'Unbalance': 'Distinct frequency pattern',
+        'Misalignment': 'Multiple frequency peaks',
+        'Bearing': 'High-frequency content'
     }
 
     fig = make_subplots(
@@ -64,15 +63,6 @@ def create_fft_comparison():
             ),
             row=row, col=col
         )
-
-        # Add harmonic markers for relevant plots
-        if name in ['Unbalance', 'Misalignment']:
-            for mult, label in [(1, '1×'), (2, '2×'), (3, '3×')]:
-                if mult * 20 <= 100:
-                    fig.add_vline(
-                        x=mult * 20, line_dash="dot", line_color="rgba(0,0,0,0.3)",
-                        line_width=1, row=row, col=col
-                    )
 
     fig.update_xaxes(title_text="Frequency (Hz)", row=2, col=1)
     fig.update_xaxes(title_text="Frequency (Hz)", row=2, col=2)
@@ -162,9 +152,9 @@ def show():
     st.markdown("""
     Different fault types produce distinct **vibration frequency patterns**:
 
-    - **Unbalance**: Dominant peak at **1× rotation frequency** (synchronous vibration)
-    - **Misalignment**: Strong peaks at **2× and 3× rotation frequency** (harmonics)
-    - **Bearing**: **High-frequency** harmonics (defect frequencies)
+    - **Unbalance**: Distinct low-frequency peak (characteristic vibration pattern)
+    - **Misalignment**: Multiple frequency peaks (complex vibration pattern)
+    - **Bearing**: High-frequency content (defect frequencies)
     """)
 
     # FFT Comparison Chart
@@ -172,9 +162,9 @@ def show():
     st.plotly_chart(fig, use_container_width=True)
 
     st.info("""
-    **Key Insight**: Data was collected at 15, 20, and 25 Hz rotation speeds. Unbalance shows
-    a strong 1× peak at the rotation frequency, while misalignment shows dominant 2× and 3×
-    harmonic peaks. MiniRocket learns these patterns automatically from raw time-domain data.
+    **Key Insight**: Data was collected at 15, 20, and 25 Hz rotation speeds. Each fault type
+    produces characteristic frequency patterns that MiniRocket learns to detect automatically
+    from raw time-domain data - no manual feature engineering required.
     """)
 
     st.markdown("---")

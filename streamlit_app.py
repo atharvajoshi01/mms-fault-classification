@@ -54,7 +54,7 @@ try:
     with open(metadata_path, 'r') as f:
         metadata = json.load(f)
 except Exception:
-    metadata = {'test_accuracy': 0.9998, 'training_time_seconds': 154, 'train_samples': 17247, 'test_samples': 4312}
+    metadata = {'test_accuracy': 0.9996, 'training_time_seconds': 4830, 'train_samples': 28842, 'test_samples': 7211}
 
 # Key metrics - single row
 col1, col2, col3, col4 = st.columns(4)
@@ -83,10 +83,10 @@ with col1:
     st.success("**✅ Normal**\n\nHealthy operation")
 
 with col2:
-    st.warning("**⚠️ Unbalance**\n\nMass imbalance (1× freq)")
+    st.warning("**⚠️ Unbalance**\n\nMass imbalance")
 
 with col3:
-    st.error("**🔄 Misalignment**\n\nShaft offset (2× freq)")
+    st.error("**🔄 Misalignment**\n\nShaft offset")
 
 with col4:
     st.info("**⚙️ Bearing**\n\nBearing degradation")

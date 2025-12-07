@@ -1,9 +1,7 @@
 """
 FFT Analysis page - Visualize frequency signatures of different fault types.
 
-Shows the characteristic frequencies:
-- Unbalance: Strong 1× running speed (fundamental frequency)
-- Misalignment: Strong 2× and 3× running speed harmonics
+Shows the characteristic frequency patterns for each fault type.
 """
 
 import streamlit as st
@@ -42,8 +40,8 @@ def generate_synthetic_signal(fault_type: str, n_samples: int = 1024) -> np.ndar
 
     Creates realistic frequency signatures for each fault type:
     - Normal: Low amplitude noise
-    - Unbalance: Strong 1× frequency component
-    - Misalignment: Strong 2× and 3× harmonics
+    - Unbalance: Distinct frequency pattern
+    - Misalignment: Multiple frequency peaks
     - Bearing: High-frequency noise components
     """
     t = np.linspace(0, 1, n_samples)
@@ -58,7 +56,7 @@ def generate_synthetic_signal(fault_type: str, n_samples: int = 1024) -> np.ndar
         signal += noise
 
     elif fault_type == 'unbalance_fault':
-        # Strong 1× component (fundamental frequency)
+        # Distinct frequency component
         signal = np.zeros((n_samples, 3))
         signal[:, 0] = 0.8 * np.sin(2 * np.pi * running_speed * t)  # Strong X
         signal[:, 1] = 0.6 * np.sin(2 * np.pi * running_speed * t + np.pi/4)  # Y phase shift
@@ -66,13 +64,13 @@ def generate_synthetic_signal(fault_type: str, n_samples: int = 1024) -> np.ndar
         signal += noise
 
     elif fault_type == 'misalignment_fault':
-        # Strong 2× and 3× harmonics
+        # Multiple frequency peaks pattern
         signal = np.zeros((n_samples, 3))
-        # 1× component (moderate)
+        # First frequency component
         signal += 0.3 * np.sin(2 * np.pi * running_speed * t)[:, np.newaxis] * np.array([1, 0.8, 0.6])
-        # 2× component (strong - characteristic of misalignment)
+        # Second frequency component (characteristic of misalignment)
         signal += 0.7 * np.sin(2 * np.pi * 2 * running_speed * t)[:, np.newaxis] * np.array([1, 0.9, 0.7])
-        # 3× component (moderate)
+        # Third frequency component
         signal += 0.4 * np.sin(2 * np.pi * 3 * running_speed * t)[:, np.newaxis] * np.array([0.8, 1, 0.6])
         signal += noise
 
@@ -176,18 +174,6 @@ def plot_fft_comparison(signal1: np.ndarray, signal2: np.ndarray,
         row=2, col=2
     )
 
-    # Mark harmonic frequencies (data collected at 15-25Hz)
-    running_speed = 20  # Hz (typical)
-    harmonics = [running_speed * i for i in range(1, 6)]
-    harmonic_labels = ['1×', '2×', '3×', '4×', '5×']
-
-    for h, label in zip(harmonics, harmonic_labels):
-        if h < 50:
-            fig.add_vline(x=h, line_dash="dash", line_color="gray",
-                         opacity=0.5, row=2, col=1)
-            fig.add_vline(x=h, line_dash="dash", line_color="gray",
-                         opacity=0.5, row=2, col=2)
-
     fig.update_layout(
         height=700,
         showlegend=False,
@@ -206,7 +192,7 @@ def plot_fft_comparison(signal1: np.ndarray, signal2: np.ndarray,
 
 def plot_harmonic_analysis(signal: np.ndarray, label: str) -> go.Figure:
     """
-    Create detailed harmonic analysis plot showing 1×, 2×, 3× peaks.
+    Create detailed frequency analysis plot for all axes.
     """
     fig = make_subplots(
         rows=1, cols=3,
@@ -232,19 +218,9 @@ def plot_harmonic_analysis(signal: np.ndarray, label: str) -> go.Figure:
             row=1, col=i+1
         )
 
-        # Add harmonic markers
-        running_speed = 20
-        for mult, h_label in [(1, '1×'), (2, '2×'), (3, '3×')]:
-            h = running_speed * mult
-            fig.add_vline(
-                x=h, line_dash="dash", line_color="rgba(0,0,0,0.3)",
-                annotation_text=h_label, annotation_position="top",
-                row=1, col=i+1
-            )
-
     fig.update_layout(
         height=400,
-        title_text=f"Harmonic Analysis - {label}",
+        title_text=f"Frequency Analysis - {label}",
         showlegend=False
     )
 
@@ -265,11 +241,11 @@ def show():
 
     Different mechanical faults create characteristic frequency signatures in vibration data:
 
-    | Fault Type | Dominant Frequency | Description |
+    | Fault Type | Frequency Pattern | Description |
     |------------|-------------------|-------------|
-    | **Unbalance** | 1× running speed | Mass imbalance causes vibration at rotation frequency |
-    | **Misalignment** | 2× and 3× running speed | Shaft misalignment creates harmonic vibrations |
-    | **Bearing Fault** | High frequencies | Bearing defects create high-frequency noise |
+    | **Unbalance** | Distinct low-frequency peak | Mass imbalance causes characteristic vibration |
+    | **Misalignment** | Multiple frequency peaks | Shaft misalignment creates complex patterns |
+    | **Bearing Fault** | High-frequency content | Bearing defects create high-frequency noise |
     """)
 
     st.markdown("---")
@@ -327,14 +303,14 @@ def show():
 
                 if 'unbalance' in fault1 or 'unbalance' in fault2:
                     st.info("""
-                    **Unbalance Signature:** Look for a strong peak at the 1× (fundamental) frequency.
+                    **Unbalance Signature:** Look for a distinct low-frequency peak.
                     This indicates mass imbalance - one side of the rotating element is heavier.
                     """)
 
                 if 'misalignment' in fault1 or 'misalignment' in fault2:
                     st.warning("""
-                    **Misalignment Signature:** Look for prominent peaks at 2× and 3× harmonics.
-                    Misaligned shafts create vibrations at multiples of the running speed.
+                    **Misalignment Signature:** Look for multiple frequency peaks in the spectrum.
+                    Misaligned shafts create complex vibration patterns.
                     """)
 
                 if 'bearing' in fault1 or 'bearing' in fault2:
@@ -351,7 +327,7 @@ def show():
     st.markdown("---")
 
     # Individual fault analysis
-    st.markdown("## Detailed Harmonic Analysis")
+    st.markdown("## Detailed Frequency Analysis")
 
     fault_type = st.selectbox(
         "Select Fault Type for Analysis",
@@ -360,8 +336,8 @@ def show():
         key="harmonic_select"
     )
 
-    if st.button("Analyze Harmonics"):
-        with st.spinner("Computing harmonic analysis..."):
+    if st.button("Analyze Frequencies"):
+        with st.spinner("Computing frequency analysis..."):
             try:
                 data = load_sample_data(fault_type, num_samples=1)
 
@@ -374,14 +350,14 @@ def show():
                 # Add interpretation
                 st.markdown("### Interpretation")
                 if fault_type == 'unbalance_fault':
-                    st.success("Notice the dominant peak at **1× rotation frequency (15-25 Hz)** - this is "
+                    st.success("Notice the distinct low-frequency peak - this is "
                               "the characteristic signature of mass unbalance.")
                 elif fault_type == 'misalignment_fault':
-                    st.success("Notice strong peaks at **2× and 3× harmonics (40-75 Hz)** - these harmonics "
-                              "indicate shaft misalignment.")
+                    st.success("Notice the multiple frequency peaks - this complex pattern "
+                              "indicates shaft misalignment.")
                 elif fault_type == 'bearing_fault':
                     st.success("Notice the broad high-frequency content - bearing defects create "
-                              "characteristic defect frequencies based on bearing geometry.")
+                              "characteristic high-frequency patterns.")
 
             except Exception as e:
                 st.error(f"Error: {e}")
@@ -403,7 +379,7 @@ def show():
         ### Why This Works
 
         - Unbalance creates periodic signals → specific kernels fire consistently
-        - Misalignment creates harmonic patterns → different kernel combinations activate
+        - Misalignment creates complex patterns → different kernel combinations activate
         - Bearing faults create high-frequency noise → yet another kernel response pattern
 
         The model learns these patterns from data without explicit FFT computation,

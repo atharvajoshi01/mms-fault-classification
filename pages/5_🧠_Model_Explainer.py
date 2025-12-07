@@ -246,8 +246,8 @@ def show():
         measures, etc.), MiniRocket generates 10,000 random kernels and lets the classifier
         figure out which responses are most useful for each fault type.
 
-        - **Unbalance faults** activate kernels sensitive to 1× frequency patterns
-        - **Misalignment faults** activate kernels sensitive to 2×/3× harmonic patterns
+        - **Unbalance faults** activate kernels sensitive to specific frequency patterns
+        - **Misalignment faults** activate kernels sensitive to complex multi-peak patterns
         - **Bearing faults** activate kernels sensitive to high-frequency noise
 
         This is why MiniRocket achieves state-of-the-art accuracy without deep learning!
@@ -330,7 +330,7 @@ def show():
         <h3 style="margin-top: 0;">What Makes This System Special</h3>
         <ul>
             <li><strong>No Deep Learning Required:</strong> Achieves state-of-the-art accuracy with simple, interpretable methods</li>
-            <li><strong>Fast & Efficient:</strong> Trains in minutes, predicts in milliseconds</li>
+            <li><strong>Fast & Efficient:</strong> Trains in ~80 minutes on CPU, predicts in milliseconds</li>
             <li><strong>Production Ready:</strong> Small model size (1.7 MB), no GPU needed</li>
             <li><strong>Highly Accurate:</strong> 99.96% accuracy on real industrial data</li>
             <li><strong>Explainable:</strong> Feature importance can be analyzed for each fault type</li>
@@ -345,7 +345,7 @@ def show():
     with st.expander("How does MiniRocket compare to traditional FFT-based methods?"):
         st.markdown("""
         Traditional methods require:
-        - Manual feature engineering (peak detection, harmonic ratios)
+        - Manual feature engineering (peak detection, frequency ratios)
         - Domain expertise to select relevant frequencies
         - Separate processing for each fault type
 
