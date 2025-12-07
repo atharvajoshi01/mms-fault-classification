@@ -4,6 +4,7 @@ About page - MiniRocket algorithm and fault detection explanation.
 
 import streamlit as st
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import numpy as np
 from pathlib import Path
 
@@ -11,62 +12,81 @@ project_root = Path(__file__).parent.parent
 
 
 def create_fft_comparison():
-    """Create FFT visualization showing fault frequency signatures."""
-    # Simulate frequency domain signatures
-    freq = np.linspace(0, 500, 1000)
+    """Create clean FFT visualization with separate subplots for each fault type."""
+    freq = np.linspace(0, 250, 500)
     rotation_freq = 60  # 60 Hz = 3600 RPM
 
-    # Normal - low flat spectrum
-    normal = 0.1 * np.ones_like(freq) + 0.05 * np.random.randn(len(freq))
-    normal = np.maximum(normal, 0)
+    def gaussian_peak(f, center, width, amplitude):
+        return amplitude * np.exp(-((f - center) ** 2) / (2 * width ** 2))
 
-    # Unbalance - strong 1x peak
-    unbalance = 0.1 * np.ones_like(freq)
-    unbalance += 0.8 * np.exp(-((freq - rotation_freq) ** 2) / 50)  # 1x peak
-    unbalance += 0.05 * np.random.randn(len(freq))
-    unbalance = np.maximum(unbalance, 0)
+    # Generate clean spectra for each fault type
+    spectra = {
+        'Normal': 0.05 * np.ones_like(freq),
+        'Unbalance': 0.05 + gaussian_peak(freq, 60, 5, 0.9),
+        'Misalignment': 0.05 + gaussian_peak(freq, 60, 5, 0.3) +
+                        gaussian_peak(freq, 120, 5, 0.95) +
+                        gaussian_peak(freq, 180, 5, 0.5),
+        'Bearing': 0.05 + gaussian_peak(freq, 60, 5, 0.2) +
+                   gaussian_peak(freq, 150, 8, 0.6) +
+                   gaussian_peak(freq, 200, 8, 0.5) +
+                   gaussian_peak(freq, 250, 8, 0.4)
+    }
 
-    # Misalignment - strong 2x peak, some 1x and 3x
-    misalignment = 0.1 * np.ones_like(freq)
-    misalignment += 0.3 * np.exp(-((freq - rotation_freq) ** 2) / 50)  # 1x
-    misalignment += 0.9 * np.exp(-((freq - 2*rotation_freq) ** 2) / 50)  # 2x peak
-    misalignment += 0.4 * np.exp(-((freq - 3*rotation_freq) ** 2) / 50)  # 3x
-    misalignment += 0.05 * np.random.randn(len(freq))
-    misalignment = np.maximum(misalignment, 0)
+    colors = {'Normal': '#2ECC71', 'Unbalance': '#F39C12',
+              'Misalignment': '#E74C3C', 'Bearing': '#3498DB'}
 
-    # Bearing - high frequency harmonics
-    bearing = 0.1 * np.ones_like(freq)
-    for harmonic in [150, 200, 250, 300, 350, 400]:
-        bearing += 0.5 * np.exp(-((freq - harmonic) ** 2) / 100)
-    bearing += 0.08 * np.random.randn(len(freq))
-    bearing = np.maximum(bearing, 0)
+    descriptions = {
+        'Normal': 'Flat spectrum - healthy',
+        'Unbalance': 'Strong 1× peak (60 Hz)',
+        'Misalignment': 'Strong 2× & 3× harmonics',
+        'Bearing': 'High-frequency peaks'
+    }
 
-    fig = go.Figure()
+    fig = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=[f"<b>{name}</b><br><span style='font-size:11px;color:gray'>{descriptions[name]}</span>"
+                        for name in spectra.keys()],
+        vertical_spacing=0.18,
+        horizontal_spacing=0.1
+    )
 
-    fig.add_trace(go.Scatter(x=freq, y=normal, name='Normal',
-                             line=dict(color='green', width=2)))
-    fig.add_trace(go.Scatter(x=freq, y=unbalance, name='Unbalance (1×)',
-                             line=dict(color='orange', width=2)))
-    fig.add_trace(go.Scatter(x=freq, y=misalignment, name='Misalignment (2×)',
-                             line=dict(color='red', width=2)))
-    fig.add_trace(go.Scatter(x=freq, y=bearing, name='Bearing (HF)',
-                             line=dict(color='blue', width=2)))
+    positions = [(1, 1), (1, 2), (2, 1), (2, 2)]
 
-    # Add vertical lines for reference frequencies
-    fig.add_vline(x=rotation_freq, line_dash="dash", line_color="gray",
-                  annotation_text="1× (60Hz)")
-    fig.add_vline(x=2*rotation_freq, line_dash="dash", line_color="gray",
-                  annotation_text="2× (120Hz)")
-    fig.add_vline(x=3*rotation_freq, line_dash="dash", line_color="gray",
-                  annotation_text="3× (180Hz)")
+    for (name, spectrum), (row, col) in zip(spectra.items(), positions):
+        fig.add_trace(
+            go.Scatter(
+                x=freq, y=spectrum,
+                fill='tozeroy',
+                fillcolor=f'rgba{tuple(list(int(colors[name][i:i+2], 16) for i in (1, 3, 5)) + [0.3])}',
+                line=dict(color=colors[name], width=2.5),
+                name=name,
+                showlegend=False
+            ),
+            row=row, col=col
+        )
+
+        # Add harmonic markers for relevant plots
+        if name in ['Unbalance', 'Misalignment']:
+            for mult, label in [(1, '1×'), (2, '2×'), (3, '3×')]:
+                if mult * 60 <= 250:
+                    fig.add_vline(
+                        x=mult * 60, line_dash="dot", line_color="rgba(0,0,0,0.3)",
+                        line_width=1, row=row, col=col
+                    )
+
+    fig.update_xaxes(title_text="Frequency (Hz)", row=2, col=1)
+    fig.update_xaxes(title_text="Frequency (Hz)", row=2, col=2)
+    fig.update_yaxes(title_text="Amplitude", row=1, col=1)
+    fig.update_yaxes(title_text="Amplitude", row=2, col=1)
 
     fig.update_layout(
-        title="Frequency Signatures by Fault Type",
-        xaxis_title="Frequency (Hz)",
-        yaxis_title="Amplitude",
-        height=400,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        margin=dict(l=50, r=50, t=80, b=50)
+        height=500,
+        margin=dict(l=60, r=40, t=80, b=60),
+        title=dict(
+            text="<b>Frequency Signatures by Fault Type</b>",
+            x=0.5,
+            font=dict(size=18)
+        )
     )
 
     return fig
