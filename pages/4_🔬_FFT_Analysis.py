@@ -94,30 +94,26 @@ def generate_synthetic_signal(fault_type: str, n_samples: int = 1024) -> np.ndar
 
 
 def load_sample_data(fault_type: str, num_samples: int = 5) -> np.ndarray:
-    """Load sample data for a fault type, or generate synthetic if unavailable."""
-    data_dir = project_root / "dataset/phase_2_3"
+    """Load sample data for a fault type from pre-extracted samples."""
+    sample_dir = project_root / "sample_data"
     file_map = {
-        'normal': 'normal.csv',
-        'unbalance_fault': 'unbalance_fault.csv',
-        'misalignment_fault': 'misalignment_fault.csv',
-        'bearing_fault': 'bearing_fault.csv'
+        'normal': 'normal_samples.npy',
+        'unbalance_fault': 'unbalance_fault_samples.npy',
+        'misalignment_fault': 'misalignment_fault_samples.npy',
+        'bearing_fault': 'bearing_fault_samples.npy'
     }
 
-    filepath = data_dir / file_map.get(fault_type, 'normal.csv')
+    filepath = sample_dir / file_map.get(fault_type, 'normal_samples.npy')
 
-    # Try to load real data first
+    # Load pre-extracted real samples
     if filepath.exists():
-        try:
-            from src.data_loader import load_mms_csv
-            data = load_mms_csv(filepath)
-            if len(data) > num_samples:
-                indices = np.random.choice(len(data), num_samples, replace=False)
-                return data[indices]
-            return data
-        except Exception:
-            pass
+        data = np.load(filepath)
+        if len(data) > num_samples:
+            indices = np.random.choice(len(data), num_samples, replace=False)
+            return data[indices]
+        return data
 
-    # Fall back to synthetic data for demonstration
+    # Fall back to synthetic data only if sample files missing
     return np.array([generate_synthetic_signal(fault_type) for _ in range(num_samples)])
 
 
@@ -300,13 +296,12 @@ def show():
     axis_select = st.radio("Select Axis", ['X', 'Y', 'Z'], horizontal=True)
     axis_idx = ['X', 'Y', 'Z'].index(axis_select)
 
-    # Check if using synthetic data
-    data_dir = project_root / "dataset/phase_2_3"
-    using_synthetic = not (data_dir / "normal.csv").exists()
+    # Check if sample data is available
+    sample_dir = project_root / "sample_data"
+    has_sample_data = (sample_dir / "normal_samples.npy").exists()
 
-    if using_synthetic:
-        st.info("**Demo Mode:** Using synthetic signals to demonstrate fault frequency patterns. "
-                "Real data will be used when dataset is available.")
+    if has_sample_data:
+        st.success("**Using real vibration samples** extracted from the training dataset.")
 
     if st.button("Generate FFT Comparison", type="primary"):
         with st.spinner("Computing FFT..."):
